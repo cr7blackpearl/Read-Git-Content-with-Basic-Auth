@@ -17,9 +17,9 @@ public class ReadGithubContentByUrl {
 	public static void main(String[] args) {
 		 
 		// Replace this token with your actual token
-		String token = "01847e8bf973ce3882add826f6a6dfc56df954cf";
+		String token = "f129213328d183f3b9c8f34e5f5716afd9f84aaf";
  
-		String url = "raw.githubusercontent.com/cr7blackpearl/TestProject/master/README.md";
+		String url = "raw.githubusercontent.com/cr7blackpearl/TestProject/6932b7b787aca72ea42e0cf73da5ccf7d654d2f4/README.md";
  
 		//URLConnection Method to get Private Github content with Basic OAuth token
 		getGithubContentUsingURLConnection(token, url);

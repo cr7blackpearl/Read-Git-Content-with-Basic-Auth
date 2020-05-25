@@ -13,7 +13,7 @@ public class ReadGithubContentByHttpClient {
 	public static void main(String[] args) {
 
 		// Replace this token with your actual token.
-		String token = "01847e8bf973ce3882add826f6a6dfc56df954cf";
+		String token = "f129213328d183f3b9c8f34e5f5716afd9f84aaf";
 
 		String url = "raw.githubusercontent.com/cr7blackpearl/TestProject/master/README.md";
 

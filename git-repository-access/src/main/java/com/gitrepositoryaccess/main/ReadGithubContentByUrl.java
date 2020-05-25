@@ -9,26 +9,28 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Base64;
 
+import com.gitrepositoryaccess.property.ReadPropertyFromFile;
+
 public class ReadGithubContentByUrl {
+	private final static Logger logger = Logger.getLogger(ReadGithubContentByUrl.class.getName());
 	
-	public static void main(String[] args) {
-		 
-		// Replace this token with your actual token
-		String token = "016c03bf6b03428949b7046535a32819cbe12aaf";
- 
-		String url = "raw.githubusercontent.com/cr7blackpearl/TestProject/master/README.md";
- 
-		//URLConnection Method to get Private Github content with Basic OAuth token
-		getGithubContentUsingURLConnection(token, url);
+	public static void main(String[] args) throws IOException {
+		ReadPropertyFromFile readProperty=new ReadPropertyFromFile();
+		Properties property = readProperty.getProperty();
+		
+		getGithubContentUsingURLConnection(property.getProperty("token"), property.getProperty("url"));
  
 	}
 	
 	private static void getGithubContentUsingURLConnection(String token, String url) {
 		String newUrl = "https://" + url;
-		System.out.println(newUrl);
+		logger.info("FUll Github Url : "+newUrl); 
 		try {
 			URL myURL = new URL(newUrl);
 			URLConnection connection = myURL.openConnection();
@@ -37,6 +39,7 @@ public class ReadGithubContentByUrl {
 			connection.setRequestProperty("Authorization", authString);
 			InputStream authInStream = connection.getInputStream();
 			System.out.println(getStringFromStream(authInStream));
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -44,19 +47,19 @@ public class ReadGithubContentByUrl {
 	
 	private static String getStringFromStream(InputStream authInStream) throws IOException {
 		if (authInStream != null) {
-			Writer crunchifyWriter = new StringWriter();
+			Writer contenWriter = new StringWriter();
  
-			char[] crunchifyBuffer = new char[2048];
+			char[] contentBuffer = new char[2048];
 			try {
 				Reader crunchifyReader = new BufferedReader(new InputStreamReader(authInStream, "UTF-8"));
 				int counter;
-				while ((counter = crunchifyReader.read(crunchifyBuffer)) != -1) {
-					crunchifyWriter.write(crunchifyBuffer, 0, counter);
+				while ((counter = crunchifyReader.read(contentBuffer)) != -1) {
+					contenWriter.write(contentBuffer, 0, counter);
 				}
 			} finally {
 				authInStream.close();
 			}
-			return crunchifyWriter.toString();
+			return contenWriter.toString();
 		} else {
 			return "No Contents";
 		}

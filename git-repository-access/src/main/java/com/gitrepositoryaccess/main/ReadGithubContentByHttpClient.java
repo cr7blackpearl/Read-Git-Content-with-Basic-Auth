@@ -1,6 +1,7 @@
 package com.gitrepositoryaccess.main;
 
 import java.io.IOException;
+import java.util.Properties;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -8,17 +9,17 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import com.gitrepositoryaccess.property.ReadPropertyFromFile;
+
 public class ReadGithubContentByHttpClient {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 
-		// Replace this token with your actual token.
-		String token = "3bac278d2dc0bbfa36e7677365e5a5491119099c";
-
-		String url = "raw.githubusercontent.com/cr7blackpearl/demo/master/README.md";
+		ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
+		Properties property = readProperty.getProperty();
 
 		// HttpClient Method to get Private Github content with Basic OAuth token.
-		getGithubContentUsingHttpClient(token, url);
+		getGithubContentUsingHttpClient(property.getProperty("token"), property.getProperty("url"));
 
 	}
 
