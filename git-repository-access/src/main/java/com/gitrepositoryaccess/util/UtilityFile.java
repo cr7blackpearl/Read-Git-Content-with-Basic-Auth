@@ -10,10 +10,8 @@ import java.text.ParseException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import com.gitrepositoryaccess.modifiedfilesondate.ReadListOfModifiedFiles;
-
 public class UtilityFile {
-	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFiles.class.getName());
+	private final static Logger logger = Logger.getLogger(UtilityFile.class.getName());
 
 	public static Properties getValuesFromProperty() throws IOException {
 		FileReader reader = new FileReader("token.properties");
@@ -24,7 +22,7 @@ public class UtilityFile {
 	}
 
 	public static StringBuffer connectToUrl() throws IOException, ParseException {
-		//ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
+		// ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
 		Properties property = UtilityFile.getValuesFromProperty();
 		URL obj = new URL(property.getProperty("url"));
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -37,7 +35,7 @@ public class UtilityFile {
 			String inputLine;
 			StringBuffer response = new StringBuffer();
 			while ((inputLine = in.readLine()) != null) {
-				
+
 				return response.append(inputLine);
 			}
 			in.close();

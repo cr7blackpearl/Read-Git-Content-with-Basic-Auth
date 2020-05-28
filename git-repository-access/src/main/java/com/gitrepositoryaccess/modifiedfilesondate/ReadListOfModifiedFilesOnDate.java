@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 
 import com.gitrepositoryaccess.util.UtilityFile;
 
-public class ReadListOfModifiedFiles {
-	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFiles.class.getName());
+public class ReadListOfModifiedFilesOnDate {
+	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFilesOnDate.class.getName());
 	
 	public static void main(String[] args) throws IOException, ParseException {
 		getFilesOnDate();
