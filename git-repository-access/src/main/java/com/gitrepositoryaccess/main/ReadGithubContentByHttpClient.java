@@ -9,14 +9,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import com.gitrepositoryaccess.property.ReadPropertyFromFile;
+import com.gitrepositoryaccess.util.UtilityFile;
 
 public class ReadGithubContentByHttpClient {
 
 	public static void main(String[] args) throws IOException {
 
-		ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
-		Properties property = readProperty.getProperty();
+		// ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
+		Properties property = UtilityFile.getValuesFromProperty();
 
 		// HttpClient Method to get Private Github content with Basic OAuth token.
 		getGithubContentUsingHttpClient(property.getProperty("token"), property.getProperty("url"));
