@@ -16,11 +16,10 @@ import org.apache.commons.codec.binary.Base64;
 
 import com.gitrepositoryaccess.util.UtilityFile;
 
-public class ReadGithubContentByUrl {
-	private final static Logger logger = Logger.getLogger(ReadGithubContentByUrl.class.getName());
+public class ConnectToGithubByUrlAndToken {
+	private final static Logger logger = Logger.getLogger(ConnectToGithubByUrlAndToken.class.getName());
 
 	public static void main(String[] args) throws IOException {
-		// ReadPropertyFromFile readProperty=new ReadPropertyFromFile();
 		Properties property = UtilityFile.getValuesFromProperty();
 
 		getGithubContentUsingURLConnection(property.getProperty("token"), property.getProperty("url"));

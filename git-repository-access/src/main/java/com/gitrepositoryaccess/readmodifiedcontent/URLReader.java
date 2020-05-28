@@ -1,4 +1,4 @@
-package com.gitrepositoryaccess.urlbased;
+package com.gitrepositoryaccess.readmodifiedcontent;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

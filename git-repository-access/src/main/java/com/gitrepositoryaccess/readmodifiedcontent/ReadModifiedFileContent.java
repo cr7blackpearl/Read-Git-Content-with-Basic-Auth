@@ -1,4 +1,4 @@
-package com.gitrepositoryaccess.urlbased;
+package com.gitrepositoryaccess.readmodifiedcontent;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Base64.Decoder;
 import java.util.stream.Collectors;
 
-public class HttpURLConnectionExample {
+public class ReadModifiedFileContent {
 	private static final String USER_AGENT = "Mozilla/5.0";
 
 	private static final String GET_URL = "https://api.github.com/repos/cr7blackpearl/TestProject/git/blobs/5fca53f730a0c49db162f2a30fc648835530cae6";
