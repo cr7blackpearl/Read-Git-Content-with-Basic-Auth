@@ -31,7 +31,7 @@ public class ReadListOfModifiedFilesOnDate {
 			response = UtilityFile.connectToUrl();
 			@SuppressWarnings("resource")
 			Scanner scanner = new Scanner(System.in);
-			System.out.println("Enter the Date ");
+			System.out.println("Enter the Date :");
 			String date = scanner.next();
 			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
 			strDate = dateFormat.format(dateFormat.parse(date));
