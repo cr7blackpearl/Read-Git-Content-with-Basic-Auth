@@ -1,0 +1,706 @@
+Jun 16, 2020 6:40:52 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Request to Get Files with modified content
+Enter the Date :
+Jun 16, 2020 6:42:39 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Files modified on: 28-05-2020
+Commit: edae1f9770a370f0a83b77b71a2ff9744e36fd71, info: Exception related changes., author: rohit
+Jun 16, 2020 6:42:51 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/modifiedfilesondate/ReadListOfModifiedFilesOnDate.java
+Commited File SHA: af4b6d10a1e6d98e0cb73383f33adc0a6870eb51
+Jun 16, 2020 6:42:51 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -18,22 +18,26 @@
+ 
+ public class ReadListOfModifiedFilesOnDate {
+ 	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFilesOnDate.class.getName());
+-	
+-	public static void main(String[] args) throws IOException, ParseException {
++
++	public static void main(String[] args) throws IOException {
+ 		getFilesOnDate();
+ 		logger.info("Request GET DONE");
+ 	}
+ 
+-	private static void getFilesOnDate() throws ParseException, IOException {
+-		StringBuffer response = UtilityFile.connectToUrl();
+-		@SuppressWarnings("resource")
+-		Scanner scanner = new Scanner(System.in);
+-		System.out.println("Enter the Date ");
+-
+-		String date = scanner.next();
+-
+-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+-		String strDate = dateFormat.format(dateFormat.parse(date));
++	private static void getFilesOnDate() throws IOException {
++		StringBuffer response = null;
++		String strDate = null;
++		try {
++			response = UtilityFile.connectToUrl();
++			@SuppressWarnings("resource")
++			Scanner scanner = new Scanner(System.in);
++			System.out.println("Enter the Date ");
++			String date = scanner.next();
++			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
++			strDate = dateFormat.format(dateFormat.parse(date));
++		} catch (ParseException e) {
++			throw new org.apache.http.ParseException("Please enter date in yyyy-mm-dd format." + e);
++		}
+ 		System.out.println("Files modified on date :" + strDate);
+ 
+ 		List<String> data = Arrays.stream(response.toString().split("\"commit\":")).skip(1)
+@@ -51,29 +55,35 @@ private static void getFilesOnDate() throws ParseException, IOException {
+ 		}
+ 	}
+ 
+-	private static String getModifiedFilesName(String collect) throws IOException {
+-		Properties property = UtilityFile.getValuesFromProperty();
+-		URL obj = new URL(collect);
+-		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+-		con.setRequestMethod("GET");
+-		con.setRequestProperty("User-Agent", property.getProperty("USER_AGENT"));
+-		int responseCode = con.getResponseCode();
+-		logger.info("GET Response Code :: " + responseCode);
++	private static String getModifiedFilesName(String collect) {
++		Properties property;
+ 		String fileName = null;
+-		if (responseCode == HttpURLConnection.HTTP_OK) {
+-			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
++		try {
++			property = UtilityFile.getValuesFromProperty();
++			URL obj = new URL(collect);
++			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
++			con.setRequestMethod("GET");
++			con.setRequestProperty("User-Agent", property.getProperty("USER_AGENT"));
++			int responseCode = con.getResponseCode();
++			logger.info("GET Response Code :: " + responseCode);
+ 
+-			String inputLine;
+-			StringBuffer response = new StringBuffer();
+-			while ((inputLine = in.readLine()) != null) {
+-				response.append(inputLine);
+-				fileName = Arrays.stream(response.toString().split("\"filename\":")).skip(1).map(l -> l.split(",")[0])
+-						.collect(Collectors.joining("\n"));
+-				System.out.println(fileName);
++			if (responseCode == HttpURLConnection.HTTP_OK) {
++				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
++
++				String inputLine;
++				StringBuffer response = new StringBuffer();
++				while ((inputLine = in.readLine()) != null) {
++					response.append(inputLine);
++					fileName = Arrays.stream(response.toString().split("\"filename\":")).skip(1)
++							.map(l -> l.split(",")[0]).collect(Collectors.joining("\n"));
++					System.out.println(fileName);
++				}
++				in.close();
++			} else {
++				logger.info("GET request not worked");
+ 			}
+-			in.close();
+-		} else {
+-			logger.info("GET request not worked");
++		} catch (IOException e) {
++			e.printStackTrace();
+ 		}
+ 		return fileName;
+ 	}
+Jun 16, 2020 6:42:51 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/util/UtilityFile.java
+Commited File SHA: 5fdfc50d2f56ad317e667fffb091c188353e4e6d
+Jun 16, 2020 6:42:51 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -6,7 +6,6 @@
+ import java.io.InputStreamReader;
+ import java.net.HttpURLConnection;
+ import java.net.URL;
+-import java.text.ParseException;
+ import java.util.Properties;
+ import java.util.logging.Logger;
+ 
+@@ -21,27 +20,31 @@ public static Properties getValuesFromProperty() throws IOException {
+ 		return properties;
+ 	}
+ 
+-	public static StringBuffer connectToUrl() throws IOException, ParseException {
+-		// ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
+-		Properties property = UtilityFile.getValuesFromProperty();
+-		URL obj = new URL(property.getProperty("url"));
+-		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+-		con.setRequestMethod("GET");
+-		con.setRequestProperty("User-Agent", property.getProperty("USER_AGENT"));
+-		int responseCode = con.getResponseCode();
+-		logger.info("GET Response Code :: " + responseCode);
+-		if (responseCode == HttpURLConnection.HTTP_OK) {
+-			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+-			String inputLine;
+-			StringBuffer response = new StringBuffer();
+-			while ((inputLine = in.readLine()) != null) {
++	public static StringBuffer connectToUrl() {
++		Properties property;
++		try {
++			property = UtilityFile.getValuesFromProperty();
++			URL obj = new URL(property.getProperty("url"));
++			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
++			con.setRequestMethod("GET");
++			con.setRequestProperty("User-Agent", property.getProperty("USER_AGENT"));
++			int responseCode = con.getResponseCode();
++			logger.info("GET Response Code :: " + responseCode);
++			if (responseCode == HttpURLConnection.HTTP_OK) {
++				BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
++				String inputLine;
++				StringBuffer response = new StringBuffer();
++				while ((inputLine = in.readLine()) != null) {
+ 
+-				return response.append(inputLine);
++					return response.append(inputLine);
++				}
++				in.close();
++			} else {
++				logger.info("GET Response Code :: " + responseCode);
+ 			}
+-			in.close();
+-		} else {
+-			logger.info("GET Response Code :: " + responseCode);
++		} catch (IOException e) {
++			e.printStackTrace();
+ 		}
+ 		return null;
+-	}
++	}	
+ }
+Jun 16, 2020 6:42:51 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/modifiedfilesondate/ReadListOfModifiedFilesOnDate.class
+Commited File SHA: 778799c023297669902c5277ffe286dd99447c6a
+Jun 16, 2020 6:42:51 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+null
+Jun 16, 2020 6:42:51 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/util/UtilityFile.class
+Commited File SHA: 60e9899f466722865618819fc6cbaffdc8ffe5a8
+Jun 16, 2020 6:42:51 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+null
+
+
+Commit: f96344b3ed363c1bc1454bef82861a0ce56c417a, info: File name change from ReadListOfModifiedFiles to
+ReadListOfModifiedFilesOnDate., author: rohit
+Jun 16, 2020 6:43:02 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/modifiedfilesondate/ReadListOfModifiedFilesOnDate.java
+Commited File SHA: f02d11717c7cd98bedc61510d6a716a89545ce5b
+Jun 16, 2020 6:43:02 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -16,8 +16,8 @@
+ 
+ import com.gitrepositoryaccess.util.UtilityFile;
+ 
+-public class ReadListOfModifiedFiles {
+-	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFiles.class.getName());
++public class ReadListOfModifiedFilesOnDate {
++	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFilesOnDate.class.getName());
+ 	
+ 	public static void main(String[] args) throws IOException, ParseException {
+ 		getFilesOnDate();
+Jun 16, 2020 6:43:02 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/util/UtilityFile.java
+Commited File SHA: c5fbf28b1fb2aad4ba874bd950433b10cdc4857f
+Jun 16, 2020 6:43:02 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -10,10 +10,8 @@
+ import java.util.Properties;
+ import java.util.logging.Logger;
+ 
+-import com.gitrepositoryaccess.modifiedfilesondate.ReadListOfModifiedFiles;
+-
+ public class UtilityFile {
+-	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFiles.class.getName());
++	private final static Logger logger = Logger.getLogger(UtilityFile.class.getName());
+ 
+ 	public static Properties getValuesFromProperty() throws IOException {
+ 		FileReader reader = new FileReader("token.properties");
+@@ -24,7 +22,7 @@ public static Properties getValuesFromProperty() throws IOException {
+ 	}
+ 
+ 	public static StringBuffer connectToUrl() throws IOException, ParseException {
+-		//ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
++		// ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
+ 		Properties property = UtilityFile.getValuesFromProperty();
+ 		URL obj = new URL(property.getProperty("url"));
+ 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+@@ -37,7 +35,7 @@ public static StringBuffer connectToUrl() throws IOException, ParseException {
+ 			String inputLine;
+ 			StringBuffer response = new StringBuffer();
+ 			while ((inputLine = in.readLine()) != null) {
+-				
++
+ 				return response.append(inputLine);
+ 			}
+ 			in.close();
+Jun 16, 2020 6:43:02 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/modifiedfilesondate/ReadListOfModifiedFilesOnDate.class
+Commited File SHA: a3e18bd648ac3e648a828bc42f493d12252b0403
+Jun 16, 2020 6:43:02 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+null
+Jun 16, 2020 6:43:02 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/util/UtilityFile.class
+Commited File SHA: 229b9105ac1c0599e4c9c829d9c0b1e0cc67613a
+Jun 16, 2020 6:43:02 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+null
+
+
+Commit: 983fbf7edd64bdc58c0bd13461b191996c90a14c, info: Naming convention changes., author: rohit
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/main/ConnectToGithubByUrlAndToken.java
+Commited File SHA: 72b735b2685d614e7478e6413f8cc59b6cba4745
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -16,11 +16,10 @@
+ 
+ import com.gitrepositoryaccess.util.UtilityFile;
+ 
+-public class ReadGithubContentByUrl {
+-	private final static Logger logger = Logger.getLogger(ReadGithubContentByUrl.class.getName());
++public class ConnectToGithubByUrlAndToken {
++	private final static Logger logger = Logger.getLogger(ConnectToGithubByUrlAndToken.class.getName());
+ 
+ 	public static void main(String[] args) throws IOException {
+-		// ReadPropertyFromFile readProperty=new ReadPropertyFromFile();
+ 		Properties property = UtilityFile.getValuesFromProperty();
+ 
+ 		getGithubContentUsingURLConnection(property.getProperty("token"), property.getProperty("url"));
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/readmodifiedcontent/ReadModifiedFileContent.java
+Commited File SHA: aa0a17dde34b74fcd718f9586641481f862e5142
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/readmodifiedcontent/URLReader.java
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/main/ConnectToGithubByUrlAndToken.class
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/readmodifiedcontent/ReadModifiedFileContent.class
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/readmodifiedcontent/URLReader.class
+Jun 16, 2020 6:43:05 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -1,4 +1,4 @@
+-package com.gitrepositoryaccess.urlbased;
++package com.gitrepositoryaccess.readmodifiedcontent;
+ 
+ import java.io.BufferedReader;
+ import java.io.IOException;
+@@ -9,7 +9,7 @@
+ import java.util.Base64.Decoder;
+ import java.util.stream.Collectors;
+ 
+-public class HttpURLConnectionExample {
++public class ReadModifiedFileContent {
+ 	private static final String USER_AGENT = "Mozilla/5.0";
+ 
+ 	private static final String GET_URL = "https://api.github.com/repos/cr7blackpearl/TestProject/git/blobs/5fca53f730a0c49db162f2a30fc648835530cae6";
+Commited File SHA: 8c95693da7499a486432344457c30fe96c18432e
+@@ -1,4 +1,4 @@
+-package com.gitrepositoryaccess.urlbased;
++package com.gitrepositoryaccess.readmodifiedcontent;
+ 
+ import java.io.BufferedReader;
+ import java.io.InputStreamReader;
+Commited File SHA: f6385ab5da9eba892809eb662eeaca19915b84dd
+null
+Commited File SHA: 7411f9b4ab569b4c7fcec78d8921ac21ebce95d8
+null
+Commited File SHA: f0148e258fcc67cfe53523ab910edf3fb0dbf054
+null
+
+
+Commit: c5db6b8ef0399bb37aeddc27b56b6cb43b1a4015, info: committing files related to Read list of modified files., author: rohit
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/.classpath
+Commited File SHA: d0e5faff289e443e66db5b9339563a5ee535e833
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/main/ReadGithubContentByHttpClient.java
+@@ -1,45 +1,27 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<classpath>
+-	<classpathentry kind="src" output="target/classes" path="src/main/java">
+-		<attributes>
+-			<attribute name="optional" value="true"/>
+-			<attribute name="maven.pomderived" value="true"/>
+-		</attributes>
+-	</classpathentry>
+-	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
+-		<attributes>
+-			<attribute name="test" value="true"/>
+-			<attribute name="optional" value="true"/>
+-			<attribute name="maven.pomderived" value="true"/>
+-		</attributes>
+-	</classpathentry>
+-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
+-		<attributes>
+-			<attribute name="maven.pomderived" value="true"/>
+-		</attributes>
+-	</classpathentry>
+-	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+-		<attributes>
+-			<attribute name="maven.pomderived" value="true"/>
+-		</attributes>
+-	</classpathentry>
+-	<classpathentry kind="lib" path="C:/Users/rohit.patil09/Downloads/org.eclipse.jgit-5.7.0.202003110725-r.jar"/>
+-	<classpathentry kind="src" path="target/generated-sources/annotations">
+-		<attributes>
+-			<attribute name="optional" value="true"/>
+-			<attribute name="maven.pomderived" value="true"/>
+-			<attribute name="ignore_optional_problems" value="true"/>
+-			<attribute name="m2e-apt" value="true"/>
+-		</attributes>
+-	</classpathentry>
+-	<classpathentry kind="src" output="target/test-classes" path="target/generated-test-sources/test-annotations">
+-		<attributes>
+-			<attribute name="optional" value="true"/>
+-			<attribute name="maven.pomderived" value="true"/>
+-			<attribute name="ignore_optional_problems" value="true"/>
+-			<attribute name="m2e-apt" value="true"/>
+-			<attribute name="test" value="true"/>
+-		</attributes>
+-	</classpathentry>
+-	<classpathentry kind="output" path="target/classes"/>
+-</classpath>
++<?xml version="1.0" encoding="UTF-8"?>
++<classpath>
++	<classpathentry kind="src" output="target/classes" path="src/main/java">
++		<attributes>
++			<attribute name="optional" value="true"/>
++			<attribute name="maven.pomderived" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
++		<attributes>
++			<attribute name="test" value="true"/>
++			<attribute name="optional" value="true"/>
++			<attribute name="maven.pomderived" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
++		<attributes>
++			<attribute name="maven.pomderived" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
++		<attributes>
++			<attribute name="maven.pomderived" value="true"/>
++		</attributes>
++	</classpathentry>
++	<classpathentry kind="output" path="target/classes"/>
++</classpath>
+Commited File SHA: fd371e095f085ebb36f70f34f485ffeb1c8d853a
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -9,14 +9,14 @@
+ import org.apache.http.impl.client.BasicResponseHandler;
+ import org.apache.http.impl.client.DefaultHttpClient;
+ 
+-import com.gitrepositoryaccess.property.ReadPropertyFromFile;
++import com.gitrepositoryaccess.util.UtilityFile;
+ 
+ public class ReadGithubContentByHttpClient {
+ 
+ 	public static void main(String[] args) throws IOException {
+ 
+-		ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
+-		Properties property = readProperty.getProperty();
++		// ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
++		Properties property = UtilityFile.getValuesFromProperty();
+ 
+ 		// HttpClient Method to get Private Github content with Basic OAuth token.
+ 		getGithubContentUsingHttpClient(property.getProperty("token"), property.getProperty("url"));
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/main/ReadGithubContentByUrl.java
+Commited File SHA: 13aae6af473f721e11b2c8b8848d597a2003c4e3
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -10,27 +10,26 @@
+ import java.net.URL;
+ import java.net.URLConnection;
+ import java.util.Properties;
+-import java.util.logging.Level;
+ import java.util.logging.Logger;
+ 
+ import org.apache.commons.codec.binary.Base64;
+ 
+-import com.gitrepositoryaccess.property.ReadPropertyFromFile;
++import com.gitrepositoryaccess.util.UtilityFile;
+ 
+ public class ReadGithubContentByUrl {
+ 	private final static Logger logger = Logger.getLogger(ReadGithubContentByUrl.class.getName());
+-	
++
+ 	public static void main(String[] args) throws IOException {
+-		ReadPropertyFromFile readProperty=new ReadPropertyFromFile();
+-		Properties property = readProperty.getProperty();
+-		
++		// ReadPropertyFromFile readProperty=new ReadPropertyFromFile();
++		Properties property = UtilityFile.getValuesFromProperty();
++
+ 		getGithubContentUsingURLConnection(property.getProperty("token"), property.getProperty("url"));
+- 
++
+ 	}
+-	
++
+ 	private static void getGithubContentUsingURLConnection(String token, String url) {
+ 		String newUrl = "https://" + url;
+-		logger.info("FUll Github Url : "+newUrl); 
++		logger.info("FUll Github Url : " + newUrl);
+ 		try {
+ 			URL myURL = new URL(newUrl);
+ 			URLConnection connection = myURL.openConnection();
+@@ -39,16 +38,16 @@ private static void getGithubContentUsingURLConnection(String token, String url)
+ 			connection.setRequestProperty("Authorization", authString);
+ 			InputStream authInStream = connection.getInputStream();
+ 			System.out.println(getStringFromStream(authInStream));
+-			
++
+ 		} catch (Exception e) {
+ 			e.printStackTrace();
+ 		}
+ 	}
+-	
++
+ 	private static String getStringFromStream(InputStream authInStream) throws IOException {
+ 		if (authInStream != null) {
+ 			Writer contenWriter = new StringWriter();
+- 
++
+ 			char[] contentBuffer = new char[2048];
+ 			try {
+ 				Reader crunchifyReader = new BufferedReader(new InputStreamReader(authInStream, "UTF-8"));
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/modifiedfilesondate/ReadListOfModifiedFiles.java
+Commited File SHA: c5bbaebb87c5e2c3b58fad4b8414f418d0c9ca40
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -0,0 +1,80 @@
++package com.gitrepositoryaccess.modifiedfilesondate;
++
++import java.io.BufferedReader;
++import java.io.IOException;
++import java.io.InputStreamReader;
++import java.net.HttpURLConnection;
++import java.net.URL;
++import java.text.ParseException;
++import java.text.SimpleDateFormat;
++import java.util.Arrays;
++import java.util.List;
++import java.util.Properties;
++import java.util.Scanner;
++import java.util.logging.Logger;
++import java.util.stream.Collectors;
++
++import com.gitrepositoryaccess.util.UtilityFile;
++
++public class ReadListOfModifiedFiles {
++	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFiles.class.getName());
++	
++	public static void main(String[] args) throws IOException, ParseException {
++		getFilesOnDate();
++		logger.info("Request GET DONE");
++	}
++
++	private static void getFilesOnDate() throws ParseException, IOException {
++		StringBuffer response = UtilityFile.connectToUrl();
++		@SuppressWarnings("resource")
++		Scanner scanner = new Scanner(System.in);
++		System.out.println("Enter the Date ");
++
++		String date = scanner.next();
++
++		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
++		String strDate = dateFormat.format(dateFormat.parse(date));
++		System.out.println("Files modified on date :" + strDate);
++
++		List<String> data = Arrays.stream(response.toString().split("\"commit\":")).skip(1)
++				.collect(Collectors.toList());
++		if (data.toString().contains(strDate)) {
++			for (String alldata : data) {
++				if (alldata.contains(strDate)) {
++					List<String> collect = Arrays.stream(alldata.toString().split("\"url\":")).skip(2)
++							.map(l -> l.split(",")[0]).collect(Collectors.toList());
++					getModifiedFilesName(collect.get(1).replaceAll("\"", ""));
++				}
++			}
++		} else {
++			logger.info("No file modified on this Date.");
++		}
++	}
++
++	private static String getModifiedFilesName(String collect) throws IOException {
++		Properties property = UtilityFile.getValuesFromProperty();
++		URL obj = new URL(collect);
++		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
++		con.setRequestMethod("GET");
++		con.setRequestProperty("User-Agent", property.getProperty("USER_AGENT"));
++		int responseCode = con.getResponseCode();
++		logger.info("GET Response Code :: " + responseCode);
++		String fileName = null;
++		if (responseCode == HttpURLConnection.HTTP_OK) {
++			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
++
++			String inputLine;
++			StringBuffer response = new StringBuffer();
++			while ((inputLine = in.readLine()) != null) {
++				response.append(inputLine);
++				fileName = Arrays.stream(response.toString().split("\"filename\":")).skip(1).map(l -> l.split(",")[0])
++						.collect(Collectors.joining("\n"));
++				System.out.println(fileName);
++			}
++			in.close();
++		} else {
++			logger.info("GET request not worked");
++		}
++		return fileName;
++	}
++}
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/property/ReadPropertyFromFile.java
+Commited File SHA: 49959addbd62d5da1d0898e70ecbc458435c64ba
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -1,17 +0,0 @@
+-package com.gitrepositoryaccess.property;
+-
+-import java.io.FileReader;
+-import java.io.IOException;
+-import java.util.Properties;
+-
+-public class ReadPropertyFromFile {
+-
+-	public Properties getProperty() throws IOException {
+-		FileReader reader = new FileReader("token.properties");
+-		Properties properties = new Properties();
+-		properties.load(reader);
+-		
+-		return properties;
+-	}
+-
+-}
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/src/main/java/com/gitrepositoryaccess/util/UtilityFile.java
+Commited File SHA: 0677d4e39eb65703565d77663c05c60c5667560d
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -0,0 +1,49 @@
++package com.gitrepositoryaccess.util;
++
++import java.io.BufferedReader;
++import java.io.FileReader;
++import java.io.IOException;
++import java.io.InputStreamReader;
++import java.net.HttpURLConnection;
++import java.net.URL;
++import java.text.ParseException;
++import java.util.Properties;
++import java.util.logging.Logger;
++
++import com.gitrepositoryaccess.modifiedfilesondate.ReadListOfModifiedFiles;
++
++public class UtilityFile {
++	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFiles.class.getName());
++
++	public static Properties getValuesFromProperty() throws IOException {
++		FileReader reader = new FileReader("token.properties");
++		Properties properties = new Properties();
++		properties.load(reader);
++
++		return properties;
++	}
++
++	public static StringBuffer connectToUrl() throws IOException, ParseException {
++		//ReadPropertyFromFile readProperty = new ReadPropertyFromFile();
++		Properties property = UtilityFile.getValuesFromProperty();
++		URL obj = new URL(property.getProperty("url"));
++		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
++		con.setRequestMethod("GET");
++		con.setRequestProperty("User-Agent", property.getProperty("USER_AGENT"));
++		int responseCode = con.getResponseCode();
++		logger.info("GET Response Code :: " + responseCode);
++		if (responseCode == HttpURLConnection.HTTP_OK) {
++			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
++			String inputLine;
++			StringBuffer response = new StringBuffer();
++			while ((inputLine = in.readLine()) != null) {
++				
++				return response.append(inputLine);
++			}
++			in.close();
++		} else {
++			logger.info("GET Response Code :: " + responseCode);
++		}
++		return null;
++	}
++}
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/META-INF/maven/com/git-repository-access/pom.properties
+Commited File SHA: d4be4289b0ecd2246fdf1da31eb33cd6ac755938
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -1,5 +1,5 @@
+ #Generated by Maven Integration for Eclipse
+-#Tue May 26 17:35:28 IST 2020
++#Thu May 28 12:56:25 IST 2020
+ version=0.0.1-SNAPSHOT
+ groupId=com
+ m2e.projectName=git-repository-access
+Commited File SHA: e5e517acb9e96660efac27a79247f00d48f4ebaaJun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/main/ReadGithubContentByHttpClient.class
+
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+null
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/main/ReadGithubContentByUrl.class
+Commited File SHA: 6292eff692b00a4eb293feaf59a6ba603d767be0
+nullJun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/modifiedfilesondate/ReadListOfModifiedFiles.class
+Commited File SHA: aef6e0a25d284416eb7274fb8b2fcd7eace47cd5
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+null
+Commited File SHA: 08d1020fc39cc00e25eedafd92971db28ae96113Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/property/ReadPropertyFromFile.class
+
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+null
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/target/classes/com/gitrepositoryaccess/util/UtilityFile.class
+Commited File SHA: 0d1558870e266823e34a902ca9618b89371307c1
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: File Name: git-repository-access/token.properties
+null
+Commited File SHA: 74d73063faa37a4fee17dd74057996ab44dec994
+Jun 16, 2020 6:43:11 PM com.gitrepositoryaccess.github.GitHubFileCompare main
+INFO: Modified Content With Previous version:
+@@ -1,2 +1,4 @@
+ token=2fc7c4dd0ccf4ebdeb1f76a66e2fbf8779fb023a
+-url=api.github.com/users/cr7blackpearl
+\ No newline at end of file
++url=https://api.github.com/repos/cr7blackpearl/Read-Git-Content-with-Basic-Auth/commits
++
++USER_AGENT = Mozilla/5.0
+\ No newline at end of file
+
+
