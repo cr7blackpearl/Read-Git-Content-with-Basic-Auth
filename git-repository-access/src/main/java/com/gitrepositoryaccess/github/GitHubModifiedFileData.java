@@ -77,7 +77,6 @@ public class GitHubModifiedFileData {
 					System.out.println("Commited File SHA: " + file.getSha());
 					logger.info("File wise Modified Content :");
 					System.out.println(file.getPatch());
-
 				}
 				System.out.println("\n");
 			} catch (IOException e) {
