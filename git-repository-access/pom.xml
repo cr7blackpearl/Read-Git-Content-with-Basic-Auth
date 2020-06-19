@@ -42,6 +42,14 @@
 			<artifactId>github-client</artifactId>
 			<version>1.3.0</version>
 		</dependency>
+	
+		<!-- Getting Difference of two lines-->
+		<dependency>
+			<groupId>fun.mike</groupId>
+			<artifactId>diff-match-patch</artifactId>
+			<version>0.0.1</version>
+		</dependency>
+		
 
 
 		<dependency>

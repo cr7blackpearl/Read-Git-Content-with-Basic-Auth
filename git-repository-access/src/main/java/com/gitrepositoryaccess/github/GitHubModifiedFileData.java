@@ -23,7 +23,7 @@ import org.kohsuke.github.PagedIterable;
 import com.gitrepositoryaccess.modifiedfilesondate.ReadListOfModifiedFilesOnDate;
 import com.gitrepositoryaccess.util.UtilityFile;
 
-public class GitHubFileCompare {
+public class GitHubModifiedFileData {
 	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFilesOnDate.class.getName());
 
 	public static void main(String[] args) {
@@ -75,7 +75,7 @@ public class GitHubFileCompare {
 				for (File file : files) {
 					logger.info("File Name: " + file.getFileName());
 					System.out.println("Commited File SHA: " + file.getSha());
-					logger.info("Modified Content With Previous version:");
+					logger.info("File wise Modified Content :");
 					System.out.println(file.getPatch());
 
 				}
