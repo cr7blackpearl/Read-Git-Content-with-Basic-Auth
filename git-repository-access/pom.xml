@@ -23,13 +23,8 @@
 			<artifactId>httpclient</artifactId>
 			<version>4.5.11</version>
 		</dependency>
-
-		<dependency>
-			<groupId>org.gitlab4j</groupId>
-			<artifactId>gitlab4j-api</artifactId>
-			<version>4.14.30</version>
-		</dependency>
-
+		
+		<!-- Connect to Github-->
 		<dependency>
 			<groupId>org.kohsuke</groupId>
 			<artifactId>github-api</artifactId>
@@ -49,8 +44,6 @@
 			<artifactId>diff-match-patch</artifactId>
 			<version>0.0.1</version>
 		</dependency>
-		
-
 
 		<dependency>
 			<groupId>junit</groupId>
