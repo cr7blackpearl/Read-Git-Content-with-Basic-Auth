@@ -1,6 +1,7 @@
 package com.gitrepositoryaccess.util;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -46,5 +47,18 @@ public class UtilityFile {
 			e.printStackTrace();
 		}
 		return null;
-	}	
+	}
+	
+
+	/*
+	 * private static FileOutputStream createExcelFile() throws IOException {
+	 * FileOutputStream outputStream = null; try { if (outputStream != null) {
+	 * return outputStream; } else { outputStream = new
+	 * FileOutputStream("/home/rohit/Way To Data Science/Excel File/GitHubPlugin.xls"
+	 * ); } // workbook.write(outputStream);
+	 * 
+	 * } catch (Exception e) { // TODO: handle exception } return outputStream;
+	 * 
+	 * }
+	 */
 }
