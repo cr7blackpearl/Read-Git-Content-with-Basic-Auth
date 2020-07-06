@@ -23,8 +23,8 @@
 			<artifactId>httpclient</artifactId>
 			<version>4.5.11</version>
 		</dependency>
-		
-		<!-- Connect to Github-->
+
+		<!-- Connect to Github -->
 		<dependency>
 			<groupId>org.kohsuke</groupId>
 			<artifactId>github-api</artifactId>
@@ -37,14 +37,27 @@
 			<artifactId>github-client</artifactId>
 			<version>1.3.0</version>
 		</dependency>
-	
-		<!-- Getting Difference of two lines-->
+
+		<!-- Getting Difference of two lines -->
 		<dependency>
 			<groupId>fun.mike</groupId>
 			<artifactId>diff-match-patch</artifactId>
 			<version>0.0.1</version>
 		</dependency>
 
+		<!-- Apache POI for interacting with Microsoft file formats -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+			<version>4.1.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>4.1.1</version>
+		</dependency>
+		
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
