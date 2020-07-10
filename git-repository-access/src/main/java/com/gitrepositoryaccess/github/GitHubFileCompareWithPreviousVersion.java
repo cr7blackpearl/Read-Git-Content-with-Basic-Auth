@@ -267,7 +267,6 @@ public class GitHubFileCompareWithPreviousVersion {
 		} catch (Exception e) {
 			logger.info("An Exception occured while writing Excel" + e);
 		}
-
 	}
 
 	private static void createExcelFile() {
