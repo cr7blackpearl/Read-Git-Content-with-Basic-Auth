@@ -51,12 +51,13 @@ public class GitHubFileCompareWithPreviousVersion {
 	private static XSSFWorkbook workbook;
 	private static String fileName, status, modifiedBy, commitMessage;
 	private static Date modifiedOn;
+	private static Properties props;
 
 	private final static Logger logger = Logger.getLogger(GitHubFileCompareWithPreviousVersion.class.getName());
 
 	public static void main(String[] args) throws IOException {
 		GHRepository repository = null;
-		Properties props = UtilityFile.getValuesFromProperty();
+		props = UtilityFile.getValuesFromProperty();
 		props.getProperty("login");
 		props.getProperty("password");
 		String gitRepoUrl = props.getProperty("gitrepo");
@@ -65,13 +66,10 @@ public class GitHubFileCompareWithPreviousVersion {
 			GitHub gitHub = GitHubBuilder.fromProperties(props).build();
 			repository = gitHub.getRepository(gitRepoUrl);
 			Iterator<GHCommit> allCommits = getAllCommits(repository);
-			
+
 			if (allCommits.hasNext()) {
 				while (allCommits.hasNext()) {
 					GHCommit commit = allCommits.next();
-					System.out.println(
-							"Commit: " + commit.getSHA1() + ", info: " + commit.getCommitShortInfo().getMessage()
-									+ ", author: " + commit.getCommitShortInfo().getAuthor().getName());
 					List<File> fileList = commit.getFiles();
 					modifiedOn = commit.getCommitDate();
 					modifiedBy = commit.getCommitShortInfo().getAuthor().getName();
@@ -94,7 +92,6 @@ public class GitHubFileCompareWithPreviousVersion {
 					List<String> parentSHA1s = commit.getParentSHA1s();
 					GHCompare compare = repository.getCompare(parentSHA1s.get(0), commit.getSHA1());
 					URL diffUrl = compare.getDiffUrl();
-					logger.info("Difference Url : " + diffUrl);
 
 					HttpURLConnection httpcon = (HttpURLConnection) new URL(diffUrl.toString()).openConnection();
 					httpcon.addRequestProperty("User-Agent", "Mozilla/5.0");
@@ -152,12 +149,16 @@ public class GitHubFileCompareWithPreviousVersion {
 					}
 					in.close();
 					System.out.println("\n");
+					if (!allCommits.hasNext()) {
+						logger.info("Excel file has been written sucessfully at location :"
+								+ props.getProperty("filePath"));
+					}
 				}
 			} else {
 				logger.info("No such commits on this Date...!");
 			}
 		} catch (IOException exception) {
-			logger.info("Not able to connect to the url due to :" + exception);
+			logger.info("Not able to connect to the url due to network connection :" + exception);
 		}
 	}
 
@@ -211,10 +212,6 @@ public class GitHubFileCompareWithPreviousVersion {
 				deleteList.add(diffs.text);
 			}
 		}
-		System.out.println("Equal Data :" + equalList);
-		// logger.info("Equal Data :" + equalList);
-		System.out.println("Deleted Data :" + deleteList);
-		System.out.println("Inserted Data :" + insertList);
 
 		List<GitHubList> allList = new ArrayList<GitHubList>();
 		GitHubList gitHubList = new GitHubList();
@@ -268,7 +265,6 @@ public class GitHubFileCompareWithPreviousVersion {
 			cell.setCellValue(commitMessage);
 
 		} catch (Exception e) {
-			// System.out.println("An Exception occured while writing Excel" + e);
 			logger.info("An Exception occured while writing Excel" + e);
 		}
 
@@ -276,7 +272,7 @@ public class GitHubFileCompareWithPreviousVersion {
 
 	private static void createExcelFile() {
 		try {
-			outputStream = new FileOutputStream("/home/rohit/Way To Data Science/Excel File/GitHubPlugin.xls");
+			outputStream = new FileOutputStream(props.getProperty("filePath"));
 			workbook = new XSSFWorkbook();
 			sheet = workbook.createSheet("Modified Files");
 
