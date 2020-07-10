@@ -10,6 +10,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -17,6 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -28,6 +30,7 @@ import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.kohsuke.github.GHCommit;
+import org.kohsuke.github.GHCommit.File;
 import org.kohsuke.github.GHCommitQueryBuilder;
 import org.kohsuke.github.GHCompare;
 import org.kohsuke.github.GHRepository;
@@ -48,19 +51,121 @@ public class GitHubFileCompareWithPreviousVersion {
 	private static XSSFWorkbook workbook;
 	private static String fileName, status, modifiedBy, commitMessage;
 	private static Date modifiedOn;
+	private static Properties props;
+
+	private final static Logger logger = Logger.getLogger(GitHubFileCompareWithPreviousVersion.class.getName());
 
 	public static void main(String[] args) throws IOException {
 		GHRepository repository = null;
-		Date since = null, until = null;
-		String date;
-		Properties props = UtilityFile.getValuesFromProperty();
+		props = UtilityFile.getValuesFromProperty();
 		props.getProperty("login");
 		props.getProperty("password");
+		String gitRepoUrl = props.getProperty("gitrepo");
 		try {
 			createExcelFile();
 			GitHub gitHub = GitHubBuilder.fromProperties(props).build();
+			repository = gitHub.getRepository(gitRepoUrl);
+			Iterator<GHCommit> allCommits = getAllCommits(repository);
 
-			repository = gitHub.getRepository("cr7blackpearl/Read-Git-Content-with-Basic-Auth");
+			if (allCommits.hasNext()) {
+				while (allCommits.hasNext()) {
+					GHCommit commit = allCommits.next();
+					List<File> fileList = commit.getFiles();
+					modifiedOn = commit.getCommitDate();
+					modifiedBy = commit.getCommitShortInfo().getAuthor().getName();
+					commitMessage = commit.getCommitShortInfo().getMessage();
+					for (File file : fileList) {
+						List<GitHubList> allList = new ArrayList<GitHubList>();
+						GitHubList gitHubList = new GitHubList();
+						if (file.getStatus().equals("removed")) {
+							fileName = file.getFileName();
+							status = file.getStatus();
+							gitHubList.setEqualData(Arrays.asList("NA"));
+							gitHubList.setInsertedData(Arrays.asList("NA"));
+							gitHubList.setDeleteData(Arrays.asList("File Removed"));
+							allList.add(gitHubList);
+							writeExcel(allList);
+
+						}
+					}
+
+					List<String> parentSHA1s = commit.getParentSHA1s();
+					GHCompare compare = repository.getCompare(parentSHA1s.get(0), commit.getSHA1());
+					URL diffUrl = compare.getDiffUrl();
+
+					HttpURLConnection httpcon = (HttpURLConnection) new URL(diffUrl.toString()).openConnection();
+					httpcon.addRequestProperty("User-Agent", "Mozilla/5.0");
+					BufferedReader in = new BufferedReader(new InputStreamReader(httpcon.getInputStream()));
+
+					StringBuilder responseSB = new StringBuilder();
+					String line, plusLine;
+					StringBuilder deletedLines = new StringBuilder();
+					StringBuilder addedLines = new StringBuilder();
+
+					while ((line = in.readLine()) != null) {
+						responseSB.append("\n" + line);
+						if (line.startsWith("-") || line.startsWith("+") || (line.startsWith("diff --git a/"))) {
+							if (line.startsWith("-")) {
+								if (!(line.startsWith("--- a/"))) {
+									deletedLines.append("\n" + line);
+								}
+								continue;
+							}
+							if ((line.startsWith("+++ b/"))) {
+								fileName = line;
+								for (File file : fileList) {
+									String substring = fileName.substring(6, fileName.length());
+									if (file.getFileName().contains(substring)) {
+										status = file.getStatus();
+									}
+								}
+								continue;
+							}
+							if (!(line.startsWith("diff --git a/"))) {
+								addedLines.append("\n" + line);
+							}
+							while ((plusLine = in.readLine()) != null) {
+								if (plusLine.startsWith("+")) {
+									addedLines.append("\n" + plusLine);
+									continue;
+
+								} else if ((plusLine.startsWith("-")) || (plusLine.startsWith("diff --git a/"))) {
+									if ((!deletedLines.toString().isEmpty()) || (!addedLines.toString().isEmpty())) {
+										DiffMatchPatch dmp = new DiffMatchPatch();
+										LinkedList<Diff> diffs = dmp.diff_main(deletedLines.toString(),
+												addedLines.toString());
+										addDataInExcel(diffs);
+										deletedLines.setLength(0);
+										addedLines.setLength(0);
+										if (!(plusLine.startsWith("--- a/"))
+												&& (!(plusLine.startsWith("diff --git a/")))) {
+											deletedLines.append("\n" + plusLine);
+										}
+									}
+									break;
+								}
+							}
+						}
+					}
+					in.close();
+					System.out.println("\n");
+					if (!allCommits.hasNext()) {
+						logger.info("Excel file has been written sucessfully at location :"
+								+ props.getProperty("filePath"));
+					}
+				}
+			} else {
+				logger.info("No such commits on this Date...!");
+			}
+		} catch (IOException exception) {
+			logger.info("Not able to connect to the url due to network connection :" + exception);
+		}
+	}
+
+	private static Iterator<GHCommit> getAllCommits(GHRepository repository) {
+		try {
+			Date since = null, until = null;
+			String date;
 			@SuppressWarnings("resource")
 			Scanner scanner = new Scanner(System.in);
 			System.out.println("Enter the Date :");
@@ -79,87 +184,14 @@ public class GitHubFileCompareWithPreviousVersion {
 			cal.set(Calendar.HOUR_OF_DAY, time.getHours());
 			cal.set(Calendar.MINUTE, time.getMinutes());
 			until = cal.getTime();
+
+			GHCommitQueryBuilder queryBuilder = repository.queryCommits().since(since).until(until);
+			PagedIterable<GHCommit> commits = queryBuilder.list();
+			Iterator<GHCommit> iterator = commits.iterator();
+
+			return iterator;
 		} catch (ParseException e) {
 			throw new org.apache.http.ParseException("Please enter date in dd-MM-yyyy format : " + e);
-		}
-
-		GHCommitQueryBuilder queryBuilder = repository.queryCommits().since(since).until(until);
-		PagedIterable<GHCommit> commits = queryBuilder.list();
-		Iterator<GHCommit> iterator = commits.iterator();
-
-		while (iterator.hasNext()) {
-			GHCommit commit = iterator.next();
-			System.out.println("Commit: " + commit.getSHA1() + ", info: " + commit.getCommitShortInfo().getMessage()
-					+ ", author: " + commit.getCommitShortInfo().getAuthor().getName());
-			System.out.println("File Name :" + commit.getFiles().get(0).getFileName());
-			System.out.println("File Status :" + commit.getFiles().get(0).getStatus());
-			System.out.println("Previous Version:");
-			System.out.println("Current Version :");
-			System.out.println("Modified Date :" + commit.getCommitDate());
-			modifiedOn = commit.getCommitDate();
-			System.out.println("Modified By :" + commit.getCommitShortInfo().getAuthor().getName());
-			modifiedBy = commit.getCommitShortInfo().getAuthor().getName();
-			System.out.println("Project Name :" + commit.getOwner().getName());
-			System.out.println("Commit Message :" + commit.getCommitShortInfo().getMessage());
-			commitMessage = commit.getCommitShortInfo().getMessage();
-
-			List<String> parentSHA1s = commit.getParentSHA1s();
-			System.out.println("Parent SHA :" + parentSHA1s);
-			GHCompare compare = repository.getCompare(parentSHA1s.get(0), commit.getSHA1());
-			URL diffUrl = compare.getDiffUrl();
-			System.out.println("****** Main Url ******: " + diffUrl);
-
-			HttpURLConnection httpcon = (HttpURLConnection) new URL(diffUrl.toString()).openConnection();
-			httpcon.addRequestProperty("User-Agent", "Mozilla/5.0");
-			BufferedReader in = new BufferedReader(new InputStreamReader(httpcon.getInputStream()));
-
-			// Read line by line
-			StringBuilder responseSB = new StringBuilder();
-			String line, plusLine;
-			StringBuilder deletedLines = new StringBuilder();
-			StringBuilder addedLines = new StringBuilder();
-
-			while ((line = in.readLine()) != null) {
-				responseSB.append("\n" + line);
-				if (line.startsWith("-") || line.startsWith("+")) {
-					if (line.startsWith("-")) {
-						if (!(line.startsWith("--- a/"))) {
-							deletedLines.append("\n" + line);
-						}
-						continue;
-					}
-					if ((line.startsWith("+++ b/"))) {
-						fileName = line;
-						System.out.println(fileName);
-						continue;
-					}
-					addedLines.append("\n" + line);
-					while ((plusLine = in.readLine()) != null) {
-						if (plusLine.startsWith("+")) {
-							addedLines.append("\n" + plusLine);
-							continue;
-
-						} else if (plusLine.startsWith("-")) {
-							if ((!deletedLines.toString().isEmpty()) && (!addedLines.toString().isEmpty())) {
-								DiffMatchPatch dmp = new DiffMatchPatch();
-								LinkedList<Diff> diffs = dmp.diff_main(deletedLines.toString(), addedLines.toString());
-								System.out.println(diffs);
-								addDataInExcel(diffs);
-								deletedLines.setLength(0);
-								addedLines.setLength(0);
-								if (!(plusLine.startsWith("--- a/"))) {
-									deletedLines.append("\n" + plusLine);
-								}
-							}
-							break;
-						}
-					}
-				}
-				System.out.println(line);
-			}
-			System.out.println("Deleted line in the Files : " + deletedLines);
-			in.close();
-			System.out.println("\n");
 		}
 	}
 
@@ -180,9 +212,6 @@ public class GitHubFileCompareWithPreviousVersion {
 				deleteList.add(diffs.text);
 			}
 		}
-		System.out.println("Equal Data :" + equalList);
-		System.out.println("Deleted Data :" + deleteList);
-		System.out.println("Inserted Data :" + insertList);
 
 		List<GitHubList> allList = new ArrayList<GitHubList>();
 		GitHubList gitHubList = new GitHubList();
@@ -195,15 +224,12 @@ public class GitHubFileCompareWithPreviousVersion {
 	}
 
 	private static void writeExcel(List<GitHubList> listData) throws IOException {
-		System.out.println(sheet.getPhysicalNumberOfRows());
 		int rowCount = sheet.getPhysicalNumberOfRows() + 1;
 		for (GitHubList aBook : listData) {
 			Row row = sheet.createRow(++rowCount);
 			writeBook(aBook, row);
 			workbook.write(outputStream);
 		}
-		System.out.println("Current Occupied rows in Excel: " + sheet.getPhysicalNumberOfRows());
-
 	}
 
 	private static void writeBook(GitHubList aBook, Row row) {
@@ -217,7 +243,7 @@ public class GitHubFileCompareWithPreviousVersion {
 			cell = row.createCell(2);
 			cell.setCellValue(modifiedOn);
 			CellStyle style1 = workbook.createCellStyle();
-			style1.setDataFormat(creationHelper.createDataFormat().getFormat("dd-mm-yyyy"));
+			style1.setDataFormat(creationHelper.createDataFormat().getFormat("dd-mm-yyyy hh:mm:ss"));
 			cell.setCellStyle(style1);
 
 			cell = row.createCell(3);
@@ -233,36 +259,32 @@ public class GitHubFileCompareWithPreviousVersion {
 			cell.setCellValue(modifiedBy);
 
 			cell = row.createCell(7);
+			cell.setCellValue(status);
+
+			cell = row.createCell(8);
 			cell.setCellValue(commitMessage);
 
 		} catch (Exception e) {
-			System.out.println("An Exception occured while writing Excel" + e);
+			logger.info("An Exception occured while writing Excel" + e);
 		}
-
 	}
 
 	private static void createExcelFile() {
 		try {
-			outputStream = new FileOutputStream("/home/rohit/Way To Data Science/Excel File/GitHubPlugin.xls");
-			// Create blank workbook
+			outputStream = new FileOutputStream(props.getProperty("filePath"));
 			workbook = new XSSFWorkbook();
-
-			// Create a blank sheet
 			sheet = workbook.createSheet("Modified Files");
 
-			// We want to make it bold with a foreground color.
 			XSSFFont headerFont = workbook.createFont();
 			headerFont.setBold(true);
 			headerFont.setFontHeightInPoints((short) 10);
 			headerFont.setColor(IndexedColors.BLACK.index);
 
-			// Create a CellSytle with the font
 			CellStyle headerStyle = workbook.createCellStyle();
 			headerStyle.setFont(headerFont);
 			headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 			headerStyle.setFillForegroundColor(IndexedColors.YELLOW.index);
 
-			// Create the header row
 			Row row = sheet.createRow(0);
 			Cell cell = row.createCell(1);
 			cell.setCellValue("File Name");
@@ -289,13 +311,17 @@ public class GitHubFileCompareWithPreviousVersion {
 			cell.setCellStyle(headerStyle);
 
 			cell = row.createCell(7);
+			cell.setCellValue("Status");
+			cell.setCellStyle(headerStyle);
+
+			cell = row.createCell(8);
 			cell.setCellValue("Commit Message");
 			cell.setCellStyle(headerStyle);
 
 			sheet.createFreezePane(0, 1);
 
 		} catch (Exception e) {
-			System.out.println("An Exception occured while creating Excel" + e);
+			logger.info("An Exception occured while creating Excel" + e);
 		}
 	}
 
