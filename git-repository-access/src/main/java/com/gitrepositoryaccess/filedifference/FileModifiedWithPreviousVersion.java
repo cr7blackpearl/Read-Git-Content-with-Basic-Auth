@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 
 import com.gitrepositoryaccess.util.UtilityFile;
 
-public class FileDifferenceWithPreviousVersion {
-	private final static Logger logger = Logger.getLogger(FileDifferenceWithPreviousVersion.class.getName());
+public class FileModifiedWithPreviousVersion {
+	private final static Logger logger = Logger.getLogger(FileModifiedWithPreviousVersion.class.getName());
 
 	public static void main(String[] args) throws IOException {
 		getFilesOnDate();
