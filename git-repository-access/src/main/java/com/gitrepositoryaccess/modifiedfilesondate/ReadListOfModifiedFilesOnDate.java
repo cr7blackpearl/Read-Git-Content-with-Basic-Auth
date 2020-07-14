@@ -20,11 +20,11 @@ public class ReadListOfModifiedFilesOnDate {
 	private final static Logger logger = Logger.getLogger(ReadListOfModifiedFilesOnDate.class.getName());
 
 	public static void main(String[] args) throws IOException {
-		getFilesOnDate();
+		getPathOnDate();
 		logger.info("Request GET DONE");
 	}
 
-	private static void getFilesOnDate() throws IOException {
+	private static void getPathOnDate() throws IOException {
 		StringBuffer response = null;
 		String strDate = null;
 		try {
