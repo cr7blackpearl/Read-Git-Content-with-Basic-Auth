@@ -129,7 +129,7 @@ public class GitHubFileCompareWithPreviousVersion {
 									addedLines.append("\n" + plusLine);
 									continue;
 
-								} else if ((plusLine.startsWith("-")) || (plusLine.startsWith("diff --git a/"))) {
+								} else if ((plusLine.startsWith("-")) || (plusLine.startsWith("diff --git a/"))|| (plusLine.startsWith(" "))) {
 									if ((!deletedLines.toString().isEmpty()) || (!addedLines.toString().isEmpty())) {
 										DiffMatchPatch dmp = new DiffMatchPatch();
 										LinkedList<Diff> diffs = dmp.diff_main(deletedLines.toString(),
@@ -138,7 +138,7 @@ public class GitHubFileCompareWithPreviousVersion {
 										deletedLines.setLength(0);
 										addedLines.setLength(0);
 										if (!(plusLine.startsWith("--- a/"))
-												&& (!(plusLine.startsWith("diff --git a/")))) {
+												&& (!(plusLine.startsWith("diff --git a/")))&&(!(plusLine.startsWith(" ")))) {
 											deletedLines.append("\n" + plusLine);
 										}
 									}
